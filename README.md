@@ -1,2 +1,2 @@
-# icsi-311
+# ICSI311
 Project code for 311
