@@ -1,0 +1,27 @@
+class Student
+	string firstName
+	string lastName
+	number grade1
+	number grade2
+	number grade3
+	construct(string first, string last, number homework, number midterm, number final)
+		firstName = first
+		lastName = last
+		grade1 = homework
+		grade2 = midterm
+		grade3 = final
+	shared getAverage(number homework, number midterm, number final) : number average
+		average = (homework + midterm + final) / 3
+	print()
+		console.print("First: " + firstName)
+		console.print("Last: " + lastName)
+		console.print("Grade:")
+		console.print(Student.getAverage(grade1, grade2, grade3))
+	shared start()
+		Student Joe, Michael, Kelly
+		Joe = new Student ("Joe", "Gorbespeki", 0, 0, 2)
+		Michael = new Student ("Michael", "Rosen", 87, 65, 97)
+		Kelly = new Student ("Kelly", "Kelly", 100, 100, 100)
+		Joe.print()
+		Michael.print()
+		Kelly.print()
