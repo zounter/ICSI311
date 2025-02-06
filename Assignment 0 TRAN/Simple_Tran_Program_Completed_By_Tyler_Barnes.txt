@@ -1,6 +1,9 @@
 class Student
-	string firstName, lastName
-	number grade1, grade2, grade3
+	string firstName
+	string lastName
+	number grade1
+	number grade2
+	number grade3
 	construct(string first, string last, number homework, number midterm, number final)
 		firstName = first
 		lastName = last
@@ -15,10 +18,10 @@ class Student
 		console.print("Grade:")
 		console.print(Student.getAverage(grade1, grade2, grade3))
 	shared start()
-		Student student1, student2, student3
-		student1 = new Student ("Joe", "Doe", 0, 0, 2)
-		student2 = new Student ("Jane", "Doe", 87, 65, 97)
-		student3 = new Student ("Jill", "Doe", 100, 100, 100)
-		student1.print()
-		student2.print()
-		student3.print()
+		Student Joe, Michael, Kelly
+		Joe = new Student ("Joe", "Gorbespeki", 0, 0, 2)
+		Michael = new Student ("Michael", "Rosen", 87, 65, 97)
+		Kelly = new Student ("Kelly", "Kelly", 100, 100, 100)
+		Joe.print()
+		Michael.print()
+		Kelly.print()
