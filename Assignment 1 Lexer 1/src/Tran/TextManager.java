@@ -16,7 +16,7 @@ public class TextManager {
 
     public char peekCharacter()
     {
-            return text.charAt(position + 1);
+            return text.charAt(position);
     }
 
     public char peekCharacter(int dist)
