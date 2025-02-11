@@ -21,7 +21,8 @@ public class TextManager {
 
     public char peekCharacter(int dist)
     {
-            return text.charAt(position + dist);
+        if(position + dist >= this.text.length()) return '~';
+        else return text.charAt(position + dist);
     }
 
     public char getCharacter()
@@ -29,4 +30,6 @@ public class TextManager {
             position++;
             return text.charAt(position - 1);
     }
+
+    public void skip(int dist) { position += dist; }
 }
