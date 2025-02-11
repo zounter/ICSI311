@@ -56,34 +56,31 @@ public class Lexer {
         buildTokenMap();
         Token dummyToken;
         LinkedList<Token> TokenList = new LinkedList<Token>();
-        String buffer = "";
         while(!document.isAtEnd())
         {
             if(Character.isLetter(document.peekCharacter() ))
             {
                 TokenList.add(readWord());
-                buffer = "";
             }
             else if(Character.isDigit(document.peekCharacter()) || (document.peekCharacter() == '.' && Character.isDigit(document.peekCharacter(1))))
             {
                 TokenList.add(readNumber());
-                buffer = "";
             }
             else
             {
+                //checking if token can be found in the next 4 chars
                 dummyToken = readPunctuation();
+                //adds nothing if no token is found
                 if (dummyToken.getType() != null) TokenList.add(dummyToken);
             }
 
         }
-
-
-
         return TokenList;
     }
 
     public Token readWord() throws Exception
     {
+        //reads a char from the document until it hits a char which is not a letter
         String buffer = "";
         while(!document.isAtEnd())
         {
@@ -97,6 +94,7 @@ public class Lexer {
                 break;
             }
         }
+        //checking for keywords, sending buffer as a word/keyword token
         if (TokenMap.containsKey(buffer))return new Token(TokenMap.get(buffer), this.line, this.column - buffer.length(), buffer);
         else return new Token(Token.TokenTypes.WORD, this.line, this.column - buffer.length(), buffer);
     }
@@ -113,6 +111,7 @@ public class Lexer {
                 this.column++;
                 buffer = buffer.concat(Character.toString(document.getCharacter()));
             }
+            //. has been hit bool active, one more . and the number will be finished
             else if(document.peekCharacter() == '.' && noSymbolYet)
             {
                 this.column++;
@@ -131,26 +130,31 @@ public class Lexer {
 
     public Token readPunctuation() throws Exception
     {
+        //filling buffer with 4 chars
         String buffer = "";
         for(int counter = 0; counter < 4; counter++)
         {
             buffer = buffer.concat(Character.toString(document.peekCharacter(counter)));
         }
+        //checking if a keyword matches buffer
         if(TokenMap.containsKey(buffer))
         {
             document.skip(4);
             return new Token(TokenMap.get(buffer), this.line, this.column, buffer);
         }
+        //filling buffer with 2 chars
         buffer = "";
         for(int counter = 0; counter < 2; counter++)
         {
             buffer = buffer.concat(Character.toString(document.peekCharacter(counter)));
         }
+        //checking if a keword matches buffer
         if(TokenMap.containsKey(buffer))
         {
             document.skip(2);
             return new Token(TokenMap.get(buffer), this.line, this.column, buffer);
         }
+        //treating character as a keyword (if it doesn't exist it will return as a null token)
         buffer = "";
         buffer = buffer.concat(Character.toString(document.peekCharacter()));
         document.skip(1);
