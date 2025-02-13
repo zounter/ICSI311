@@ -2,6 +2,7 @@ package Tran;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class Lexer {
 
@@ -9,40 +10,39 @@ public class Lexer {
     private int line;
     private int column;
 
-    private HashMap<String, Token.TokenTypes> TokenMap = new HashMap<String, Token.TokenTypes>();
+    private HashMap<String, Token.TokenTypes> TokenMap = new HashMap<String, Token.TokenTypes>(Map.ofEntries(
+            Map.entry("=", Token.TokenTypes.ASSIGN),
+            Map.entry("(", Token.TokenTypes.LPAREN),
+            Map.entry(")", Token.TokenTypes.RPAREN),
+            Map.entry(":", Token.TokenTypes.COLON),
+            Map.entry(".", Token.TokenTypes.DOT),
+            Map.entry("+", Token.TokenTypes.PLUS),
+            Map.entry("-", Token.TokenTypes.MINUS),
+            Map.entry("*", Token.TokenTypes.TIMES),
+            Map.entry("/", Token.TokenTypes.DIVIDE),
+            Map.entry("%", Token.TokenTypes.MODULO),
+            Map.entry(",", Token.TokenTypes.COMMA),
+            Map.entry("==", Token.TokenTypes.EQUAL),
+            Map.entry("!=", Token.TokenTypes.NOTEQUAL),
+            Map.entry("<", Token.TokenTypes.LESSTHAN),
+            Map.entry("<=", Token.TokenTypes.LESSTHANEQUAL),
+            Map.entry(">", Token.TokenTypes.GREATERTHAN),
+            Map.entry(">=", Token.TokenTypes.GREATERTHANEQUAL),
+            Map.entry("implements", Token.TokenTypes.IMPLEMENTS),
+            Map.entry("class", Token.TokenTypes.CLASS),
+            Map.entry("interface", Token.TokenTypes.INTERFACE),
+            Map.entry("loop", Token.TokenTypes.LOOP),
+            Map.entry("if", Token.TokenTypes.IF),
+            Map.entry("else", Token.TokenTypes.ELSE),
+            Map.entry("    ", Token.TokenTypes.INDENT),
+            Map.entry("\n", Token.TokenTypes.NEWLINE),
+            Map.entry("new", Token.TokenTypes.NEW),
+            Map.entry("private", Token.TokenTypes.PRIVATE),
+            Map.entry("shared", Token.TokenTypes.SHARED),
+            Map.entry("construct", Token.TokenTypes.CONSTRUCT)
+    ));
 
-    public void buildTokenMap()
-    {
-        TokenMap.put("=", Token.TokenTypes.ASSIGN);
-        TokenMap.put("(", Token.TokenTypes.LPAREN);
-        TokenMap.put(")", Token.TokenTypes.RPAREN);
-        TokenMap.put(":", Token.TokenTypes.COLON);
-        TokenMap.put(".", Token.TokenTypes.DOT);
-        TokenMap.put("+", Token.TokenTypes.PLUS);
-        TokenMap.put("-", Token.TokenTypes.MINUS);
-        TokenMap.put("*", Token.TokenTypes.TIMES);
-        TokenMap.put("/", Token.TokenTypes.DIVIDE);
-        TokenMap.put("%", Token.TokenTypes.MODULO);
-        TokenMap.put(",", Token.TokenTypes.COMMA);
-        TokenMap.put("==", Token.TokenTypes.EQUAL);
-        TokenMap.put("!=", Token.TokenTypes.NOTEQUAL);
-        TokenMap.put("<", Token.TokenTypes.LESSTHAN);
-        TokenMap.put("<=", Token.TokenTypes.LESSTHANEQUAL);
-        TokenMap.put(">", Token.TokenTypes.GREATERTHAN);
-        TokenMap.put(">=", Token.TokenTypes.GREATERTHANEQUAL);
-        TokenMap.put("implements", Token.TokenTypes.IMPLEMENTS);
-        TokenMap.put("class", Token.TokenTypes.CLASS);
-        TokenMap.put("interface", Token.TokenTypes.INTERFACE);
-        TokenMap.put("loop", Token.TokenTypes.LOOP);
-        TokenMap.put("if", Token.TokenTypes.IF);
-        TokenMap.put("else", Token.TokenTypes.ELSE);
-        TokenMap.put("    ", Token.TokenTypes.INDENT);
-        TokenMap.put("\n", Token.TokenTypes.NEWLINE);
-        TokenMap.put("new", Token.TokenTypes.NEW);
-        TokenMap.put("private", Token.TokenTypes.PRIVATE);
-        TokenMap.put("shared", Token.TokenTypes.SHARED);
-        TokenMap.put("construct", Token.TokenTypes.CONSTRUCT);
-    }
+
 
     public Lexer(String input)
     {
@@ -53,8 +53,7 @@ public class Lexer {
 
     public List<Token> Lex() throws Exception
     {
-        buildTokenMap();
-        Token dummyToken;
+            Token dummyToken;
         LinkedList<Token> TokenList = new LinkedList<Token>();
         while(!document.isAtEnd())
         {
