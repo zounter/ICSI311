@@ -6,11 +6,13 @@ import java.util.Map;
 
 public class Lexer {
 
-    private TextManager document = new TextManager("");
+    private TextManager document;
     private int line;
     private int column;
-
-    private HashMap<String, Token.TokenTypes> TokenMap = new HashMap<String, Token.TokenTypes>(Map.ofEntries(
+    private int  indents = 0;
+    private int whitespace = 0;
+    private LinkedList<Token> TokenList = new LinkedList<>();
+    private HashMap<String, Token.TokenTypes> TokenMap = new HashMap<>(Map.ofEntries(
             Map.entry("=", Token.TokenTypes.ASSIGN),
             Map.entry("(", Token.TokenTypes.LPAREN),
             Map.entry(")", Token.TokenTypes.RPAREN),
@@ -47,14 +49,14 @@ public class Lexer {
     public Lexer(String input)
     {
         this.document = new TextManager(input);
-        this.line = 0;
-        this.column = 0;
+        this.line = 1;
+        this.column = 1;
     }
 
     public List<Token> Lex() throws Exception
     {
             Token dummyToken;
-        LinkedList<Token> TokenList = new LinkedList<Token>();
+
         while(!document.isAtEnd())
         {
             if(Character.isLetter(document.peekCharacter() ))
@@ -65,6 +67,18 @@ public class Lexer {
             {
                 TokenList.add(readNumber());
             }
+            else if(document.peekCharacter() == '\n')
+            {
+                handleIndentation();
+            }
+            else if(document.peekCharacter() == '{')
+            {
+                skipComment();
+            }
+            else if(document.peekCharacter() == '\"')
+            {
+                TokenList.add(readString());
+            }
             else
             {
                 //checking if token can be found in the next 4 chars
@@ -72,18 +86,26 @@ public class Lexer {
                 //adds nothing if no token is found
                 if (dummyToken.getType() != null) TokenList.add(dummyToken);
             }
-
         }
+        //throwing all final dedents into TokenList
+        if (indents != 0)
+        {
+            for (int counter = 0; counter < indents; counter++)
+            {
+                TokenList.add(new Token(Token.TokenTypes.DEDENT, this.line, this.column));
+            }
+        }
+
         return TokenList;
     }
 
-    public Token readWord() throws Exception
+    public Token readWord()
     {
         //reads a char from the document until it hits a char which is not a letter
         String buffer = "";
         while(!document.isAtEnd())
         {
-            if(Character.isLetter(document.peekCharacter()))
+            if(Character.isLetter(document.peekCharacter()) || Character.isDigit(document.peekCharacter()))
             {
                 buffer = buffer.concat(Character.toString(document.getCharacter()));
                 this.column++;
@@ -94,11 +116,10 @@ public class Lexer {
             }
         }
         //checking for keywords, sending buffer as a word/keyword token
-        if (TokenMap.containsKey(buffer))return new Token(TokenMap.get(buffer), this.line, this.column - buffer.length(), buffer);
-        else return new Token(Token.TokenTypes.WORD, this.line, this.column - buffer.length(), buffer);
+        return new Token(TokenMap.getOrDefault(buffer, Token.TokenTypes.WORD), this.line, this.column - buffer.length(), buffer);
     }
 
-    public Token readNumber() throws  Exception
+    public Token readNumber()
     {
         //reading document until it is no longer a number
         String buffer = "";
@@ -122,12 +143,10 @@ public class Lexer {
                 break;
             }
         }
-
-        System.out.println(buffer);
         return new Token(Token.TokenTypes.NUMBER, this.line, this.column - buffer.length(), buffer);
     }
 
-    public Token readPunctuation() throws Exception
+    public Token readPunctuation()
     {
         //filling buffer with 4 chars
         String buffer = "";
@@ -158,6 +177,101 @@ public class Lexer {
         buffer = buffer.concat(Character.toString(document.peekCharacter()));
         document.skip(1);
         return new Token(TokenMap.get(buffer), this.line, this.column, buffer);
+    }
+
+    public Token readString()
+    {
+        //reads all string within a quoted string, creates a new quoted string token with the string read
+        String buffer = "";
+        document.skip(1);
+        this.column++;
+        while(!document.isAtEnd())
+        {
+            if(document.peekCharacter() == '\"') break;
+            buffer = buffer.concat(Character.toString(document.getCharacter()));
+        }
+        document.skip(1);
+        this.column++;
+        return new Token(Token.TokenTypes.QUOTEDSTRING, this.line, this.column - buffer.length(), buffer);
+    }
+
+    public void skipComment()
+    {
+        //skips over comments by finding the first '}' endpoint in the document
+        int layer = 1;
+        if(!document.isAtEnd())
+        {
+            document.skip(1);
+        }
+        while(!document.isAtEnd())
+        {
+            if(document.peekCharacter() == '}')
+            {
+                layer--;
+            }
+            //nesting comment, another '}' endpoint must be found to exit the comment now
+            else if (document.peekCharacter() == '{')
+            {
+                layer++;
+            }
+            if(layer <= 0)
+            {
+                break;
+            }
+            document.skip(1);
+            this.column++;
+
+        }
+    }
+
+    public void handleIndentation()
+    {
+        //adding newline to List
+        this.line++;
+        this.TokenList.add(new Token(Token.TokenTypes.NEWLINE, this.line, this.column, "\n"));
+        document.skip(1);
+        this.column = 1;
+        //loops until the first non-whitespace char is found, counts every whitespace along the way
+        while(!document.isAtEnd())
+        {
+            // \t is a tab, since tabs are equal to 4 whitespace in TRAN 4 whitespace will be added
+            if(document.peekCharacter() == '\t')
+            {
+                whitespace += 4;
+            }
+            //no content in line exception
+            else if(document.peekCharacter() == '\n')
+            {
+                whitespace = indents * 4;
+                break;
+            }
+            else if(document.peekCharacter() != ' ')
+            {
+                break;
+            }
+            else
+            {
+                whitespace++;
+            }
+            document.skip(1);
+            this.column++;
+        }
+        //checking if there is more or less whitespace than the prior line
+        whitespace = whitespace/4;
+        if(whitespace > indents)
+        {
+            this.TokenList.add(new Token(Token.TokenTypes.INDENT, this.line, this.column));
+            indents = whitespace;
+        }
+        else if(whitespace < indents)
+        {
+            for(int counter = 0; counter < indents - whitespace; counter++)
+            {
+                this.TokenList.add(new Token(Token.TokenTypes.DEDENT, this.line, this.column));
+            }
+            indents = whitespace;
+        }
+        whitespace = 0;
     }
 
 }
