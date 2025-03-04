@@ -2,6 +2,7 @@ package Tran;
 import AST.*;
 import org.w3c.dom.ls.LSParserFilter;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class Parser {
@@ -63,8 +64,6 @@ public class Parser {
         {
             throw new SyntaxErrorException("Interface has no end", this.ParserManager.getCurrentLine(), this.ParserManager.getCurrentColumnNumber());
         }
-
-
     }
 
     private void ParseClass() throws SyntaxErrorException
@@ -89,14 +88,7 @@ public class Parser {
             if(this.ParserManager.nextTwoTokensMatch(Token.TokenTypes.LPAREN, Token.TokenTypes.WORD))
             {
                 this.ParserManager.Remove(1);
-                parserVariableDeclaration = parseParameterVariableDeclorations();
-                parserMethodHeader.parameters.add(parserVariableDeclaration);
-                while (this.ParserManager.peek(0).get().getType() == Token.TokenTypes.COMMA)
-                {
-                    ParserManager.Remove(1);
-                    parserVariableDeclaration = parseParameterVariableDeclorations();
-                    parserMethodHeader.parameters.add(parserVariableDeclaration);
-                }
+                parserMethodHeader.parameters.addAll(parseParameterVariableDeclorations());
                 if(this.ParserManager.peek(0).get().getType() == Token.TokenTypes.RPAREN)
                 {
                     ParserManager.Remove(1);
@@ -117,15 +109,8 @@ public class Parser {
             }
             if (this.ParserManager.peek(0).get().getType() == Token.TokenTypes.COLON)
             {
-                this.ParserManager.Remove(1);
-                parserVariableDeclaration = parseParameterVariableDeclorations();
-                parserMethodHeader.returns.add(parserVariableDeclaration);
-                while (this.ParserManager.peek(0).get().getType() == Token.TokenTypes.COMMA)
-                {
-                    ParserManager.Remove(1);
-                    parserVariableDeclaration = parseParameterVariableDeclorations();
-                    parserMethodHeader.returns.add(parserVariableDeclaration);
-                }
+                ParserManager.Remove(1);
+                parserMethodHeader.returns.addAll(parseParameterVariableDeclorations());
             }
             if (this.ParserManager.peek(0).get().getType() == Token.TokenTypes.NEWLINE)
             {
@@ -144,7 +129,19 @@ public class Parser {
         return parserMethodHeader;
     }
 
-    private VariableDeclarationNode parseParameterVariableDeclorations() throws SyntaxErrorException
+    private List<VariableDeclarationNode> parseParameterVariableDeclorations() throws SyntaxErrorException
+    {
+        List <VariableDeclarationNode> DeclarationList = new LinkedList<>();
+        DeclarationList.add(parseParameterVariableDecloration());
+        while (this.ParserManager.peek(0).get().getType() == Token.TokenTypes.COMMA)
+        {
+            ParserManager.Remove(1);
+            DeclarationList.add(parseParameterVariableDecloration());
+        }
+        return DeclarationList;
+    }
+
+    private VariableDeclarationNode parseParameterVariableDecloration() throws SyntaxErrorException
     {
         VariableDeclarationNode parserVariableDeclarationNode = new VariableDeclarationNode();
         if(this.ParserManager.nextTwoTokensMatch(Token.TokenTypes.WORD, Token.TokenTypes.WORD))
