@@ -27,7 +27,7 @@ public class Parser {
             }
             else if (this.ParserManager.peek(0).get().getType() == Token.TokenTypes.CLASS)
             {
-                ParseClass();
+               this.ParserNode.Classes.add(ParseClass());
             }
             else
             {
@@ -66,8 +66,48 @@ public class Parser {
         }
     }
 
-    private void ParseClass() throws SyntaxErrorException
+    private ClassNode ParseClass() throws SyntaxErrorException
     {
+        ClassNode parserClass = new ClassNode();
+        if(!this.ParserManager.nextTwoTokensMatch(Token.TokenTypes.CLASS, Token.TokenTypes.WORD))
+        {
+            throw new SyntaxErrorException("Improper class declaration", this.ParserManager.getCurrentLine(), this.ParserManager.getCurrentColumnNumber());
+        }
+        this.ParserManager.Remove(1);
+        parserClass.name = this.ParserManager.Remove(1).get().getValue();
+
+        if ()
+        {}
+        if (getCurrentTokenType().equals(Token.TokenTypes.IMPLEMENTS))
+        {
+            this.ParserManager.Remove(1);
+
+        }
+        if(this.ParserManager.nextTwoTokensMatch(Token.TokenTypes.NEWLINE, Token.TokenTypes.INDENT))
+        {
+            throw new SyntaxErrorException("Improper class declaration", this.ParserManager.getCurrentLine(), this.ParserManager.getCurrentColumnNumber());
+        }
+        this.ParserManager.Remove(2);
+        while (!getCurrentTokenType().equals(Token.TokenTypes.DEDENT))
+        {
+            if (getCurrentTokenType().equals(Token.TokenTypes.CONSTRUCT))
+            {
+                parserClass.constructors.add(parseConstructor);
+            }
+            else if (getCurrentTokenType().equals(Token.TokenTypes.PRIVATE) || getCurrentTokenType().equals(Token.TokenTypes.SHARED) || getCurrentTokenType().equals(Token.TokenTypes.WORD))
+            {
+                parserClass.methods.add(parseMethodDeclaration);
+            }
+            else if(getCurrentTokenType().equals())
+            {
+                parserClass.members.add(parseMember);
+            }
+            else
+            {
+
+            }
+        }
+
 
     }
 
@@ -154,6 +194,11 @@ public class Parser {
             throw new SyntaxErrorException("Improper variable declaration", ParserManager.getCurrentLine(), ParserManager.getCurrentColumnNumber());
         }
         return parserVariableDeclarationNode;
+    }
+
+    private Token.TokenTypes getCurrentTokenType()
+    {
+        return this.ParserManager.peek(0).get().getType();
     }
 
 
