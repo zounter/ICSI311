@@ -37,7 +37,14 @@ public class TokenManager {
 
     public Optional<Token> peek(int i)
     {
-	    return Optional.of(TokenList.get(i));
+        if(i < TokenList.size())
+        {
+            return Optional.of(TokenList.get(i));
+        }
+        else
+        {
+            return Optional.of(TokenList.getLast());
+        }
     }
 
     public boolean nextTwoTokensMatch(Token.TokenTypes first, Token.TokenTypes second)
