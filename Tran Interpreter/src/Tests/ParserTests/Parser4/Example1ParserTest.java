@@ -1,4 +1,4 @@
-package Tests.ParserTests.Parser3;
+package Tests.ParserTests.Parser4;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import java.util.LinkedList;

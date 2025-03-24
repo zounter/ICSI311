@@ -191,16 +191,18 @@ public class Parser {
     {
         if(!getTokenTypeAt(position).equals(Token.TokenTypes.INDENT))
         {
-            ExceptionHandler("missing Indent in method boddy");
+            ExceptionHandler("missing Indent in method body");
         }
         position++;
         while (getTokenTypeAt(position).equals(Token.TokenTypes.IF) || getTokenTypeAt(position).equals(Token.TokenTypes.LOOP) || getTokenTypeAt(position).equals(Token.TokenTypes.WORD))
         {
+            int temp = position;
             try
             {
                 Locals.addAll(ParseVariableDeclarations());
             }
             catch (Exception SyntaxErrorException) {
+                position = temp;
                 Statements.add(ParseStatement());
             }
         }
@@ -279,15 +281,19 @@ public class Parser {
     private IfNode ParseIf() throws SyntaxErrorException
     {
         IfNode parserIf = new IfNode();
+        parserIf.statements = new ArrayList<>();
+        parserIf.elseStatement = Optional.empty();
+        position++;
         parserIf.condition = ParseBoolExpTerm();
         if(!getTokenTypeAt(position).equals(Token.TokenTypes.NEWLINE))
         {
             ExceptionHandler("Missing Newline in if statement");
         }
+        position++;
         parserIf.statements.addAll(ParseStatements());
         if(getTokenTypeAt(position).equals(Token.TokenTypes.ELSE))
         {
-            parserIf.elseStatement = ParseElse();
+            parserIf.elseStatement = Optional.of(ParseElse());
         }
         return parserIf;
     }
@@ -295,13 +301,43 @@ public class Parser {
     private List<StatementNode> ParseStatements() throws SyntaxErrorException
     {
         List <StatementNode> parserStatements = new ArrayList<>();
+        //check indent
+        if(!getTokenTypeAt(position).equals(Token.TokenTypes.INDENT))
+        {
+            ExceptionHandler("Missing indentation");
+        }
+        position++;
+        while(getTokenTypeAt(position).equals(Token.TokenTypes.LOOP) || getTokenTypeAt(position).equals(Token.TokenTypes.IF) || getTokenTypeAt(position).equals(Token.TokenTypes.WORD))
+        {
+                parserStatements.add(ParseStatement());
+        }
 
+        if(getTokenTypeAt(position).equals(Token.TokenTypes.NEWLINE))
+        {
+            position++;
+        }
+        if(!getTokenTypeAt(position).equals(Token.TokenTypes.DEDENT))
+        {
+            ExceptionHandler("Missing dedent");
+        }
+        position++;
+
+        //check dedent
         return parserStatements;
     }
 
-    private Optional <ElseNode> ParseElse() throws SyntaxErrorException
+    private ElseNode ParseElse() throws SyntaxErrorException
     {
         ElseNode parseElse = new ElseNode();
+        parseElse.statements = new ArrayList<>();
+        position++;
+
+        if(!getTokenTypeAt(position).equals(Token.TokenTypes.NEWLINE))
+        {
+            ExceptionHandler("Missing NEWLINE in else statement");
+        }
+        position++;
+
         if(getTokenTypeAt(position).equals(Token.TokenTypes.INDENT))
         {
             parseElse.statements.addAll(ParseStatements());
@@ -310,7 +346,7 @@ public class Parser {
         {
             parseElse.statements.add(ParseStatement());
         }
-        return Optional.of(parseElse);
+        return parseElse;
     }
 
     private LoopNode ParseLoop() throws SyntaxErrorException
@@ -330,6 +366,9 @@ public class Parser {
         {
             ExceptionHandler("Loop statement is missing Newline");
         }
+        position++;
+        parserLoop.statements = ParseStatements();
+
         return parserLoop;
     }
     //@TODO this piece of crap
@@ -348,7 +387,7 @@ public class Parser {
                 ExceptionHandler("missing assignment fror references in Method call");
             }
         }
-        //ParseMethodCallExpression();
+        ParseMethodCallExpression();
         if(!getTokenTypeAt(position).equals(Token.TokenTypes.NEWLINE))
         {
             ExceptionHandler("Missing NEWLINE in Method call");
@@ -361,16 +400,17 @@ public class Parser {
     {
         AssignmentNode parserAssignment = new AssignmentNode();
         parserAssignment.target = ParseVariableReference();
-        if(!getTokenTypeAt(position).equals(Token.TokenTypes.EQUAL))
+        if(!getTokenTypeAt(position).equals(Token.TokenTypes.ASSIGN))
         {
             ExceptionHandler("Missing = sign for assignment declaration");
         }
         position++;
         parserAssignment.expression = ParseExpression();
-        if(!getTokenTypeAt(position).equals(Token.TokenTypes.NEWLINE))
+        if(!getTokenTypeAt(position).equals(Token.TokenTypes.NEWLINE) && !getTokenTypeAt(position).equals(Token.TokenTypes.DEDENT))
         {
             ExceptionHandler("Missing NEWLINE in assignment expression");
         }
+        position++;
         return parserAssignment;
     }
 
@@ -422,26 +462,82 @@ public class Parser {
 
     private ExpressionNode ParseBoolExpTerm() throws SyntaxErrorException
     {
+        int temp = position;
         BooleanOpNode parserBool = new BooleanOpNode();
         try
         {
-            //return ParseMethodCallExpression();
+            return ParseMethodCallExpression();
         }
         catch (Exception SyntaxErrorException)
         {
+            position = temp;
             try
             {
-                parserBool.left = ParseExpression();
-                parserBool.op = BooleanOpNode.BooleanOperations.valueOf(getTokenValueAt(position));
+                CompareNode parserCompare = new CompareNode();
+                parserCompare.left = ParseExpression();
+                switch (getTokenTypeAt(position))
+                {
+                    case LESSTHAN:
+                        parserCompare.op = CompareNode.CompareOperations.lt;
+                        break;
+                        case GREATERTHAN:
+                        parserCompare.op = CompareNode.CompareOperations.gt;
+                        break;
+                    case EQUAL:
+                        parserCompare.op = CompareNode.CompareOperations.eq;
+                        break;
+                    case NOTEQUAL:
+                        parserCompare.op = CompareNode.CompareOperations.ne;
+                        break;
+                    case LESSTHANEQUAL:
+                        parserCompare.op = CompareNode.CompareOperations.le;
+                        break;
+                    case GREATERTHANEQUAL:
+                        parserCompare.op = CompareNode.CompareOperations.ge;
+                        break;
+                    default:
+                        ExceptionHandler("Improper Comparison opperator");
+                }
                 position++;
-                parserBool.right = ParseExpression();
+                parserCompare.right = ParseExpression();
+                return parserCompare;
             }
             catch (Exception SyntaxErrorException2)
             {
+                position = temp;
                 return ParseVariableReference();
             }
         }
-        return ParseVariableReference();
+    }
+
+    MethodCallExpressionNode ParseMethodCallExpression() throws SyntaxErrorException
+    {
+        MethodCallExpressionNode parserMethodCallExpression = new MethodCallExpressionNode();
+        if (MatchTokens(new Token.TokenTypes[]{Token.TokenTypes.WORD, Token.TokenTypes.DOT}))
+        {
+            parserMethodCallExpression.objectName = Optional.of(getTokenValueAt(position));
+            position += 2;
+        }
+        if (!getTokenTypeAt(position).equals(Token.TokenTypes.WORD))
+        {
+            ExceptionHandler("Missing method name in method call");
+        }
+        parserMethodCallExpression.methodName = getTokenValueAt(position);
+        position++;
+        if (!getTokenTypeAt(position).equals(Token.TokenTypes.LPAREN))
+        {
+            ExceptionHandler("Missing Right parentheses in method call");
+        }
+        position++;
+        while(!getTokenTypeAt(position).equals(Token.TokenTypes.RPAREN))
+        {
+            parserMethodCallExpression.parameters.add(ParseExpression());
+            if (!getTokenTypeAt(position).equals(Token.TokenTypes.DOT))
+            {
+                ExceptionHandler("Missing comma in message expression");
+            }
+        }
+        return parserMethodCallExpression;
     }
 
     VariableReferenceNode ParseVariableReference() throws SyntaxErrorException
@@ -456,7 +552,7 @@ public class Parser {
         return parserVariableReference;
     }
 
-    private MathOpNode ParseExpression() throws SyntaxErrorException
+    private ExpressionNode ParseExpression() throws SyntaxErrorException
     {
         MathOpNode parserExpression = new MathOpNode();
         parserExpression.left = ParseTerm();
@@ -466,20 +562,92 @@ public class Parser {
             position++;
             parserExpression.right = ParseTerm();
         }
+        else
+        {
+            return parserExpression.left;
+        }
         return parserExpression;
     }
 
-    private MathOpNode ParseTerm() throws SyntaxErrorException
+    private ExpressionNode ParseTerm() throws SyntaxErrorException
     {
         MathOpNode parserTerm = new MathOpNode();
-        //parserTerm.left = ParseFactor();
+        parserTerm.left = ParseFactor();
         if(getTokenTypeAt(position).equals(Token.TokenTypes.DIVIDE) || getTokenTypeAt(position).equals(Token.TokenTypes.TIMES) || getTokenTypeAt(position).equals(Token.TokenTypes.MODULO))
         {
             parserTerm.op = MathOpNode.MathOperations.valueOf(getTokenValueAt(position));
             position++;
-           // parserTerm.right = ParseFactor();
+            parserTerm.right = ParseFactor();
+        }
+        else
+        {
+            return parserTerm.left;
         }
         return  parserTerm;
+    }
+
+    private ExpressionNode ParseFactor() throws SyntaxErrorException
+    {
+        ExpressionNode parserFactor = null;
+        switch (getTokenTypeAt(position))
+        {
+            case Token.TokenTypes.NUMBER:
+                NumericLiteralNode parserNumber = new NumericLiteralNode();
+                parserNumber.value = Float.parseFloat(getTokenValueAt(position));
+                parserFactor = parserNumber;
+                position++;
+                break;
+            case Token.TokenTypes.QUOTEDCHARACTER:
+                CharLiteralNode parserCharacter = new CharLiteralNode();
+                parserCharacter.value = getTokenValueAt(position).charAt(0);
+                position++;
+                parserFactor = parserCharacter;
+                break;
+            case Token.TokenTypes.QUOTEDSTRING:
+                StringLiteralNode parserString = new StringLiteralNode();
+                parserString.value = getTokenValueAt(position);
+                position++;
+                parserFactor = parserString;
+                break;
+            case Token.TokenTypes.LPAREN:
+                position++;
+                ParseExpression();
+                if (getTokenTypeAt(position) != Token.TokenTypes.RPAREN)
+                {
+                    ExceptionHandler("Missing parentheses in Factor");
+                }
+                position++;
+                break;
+            case Token.TokenTypes.NEW:
+                NewNode parserNewNode = new NewNode();
+                position++;
+                if(!getTokenTypeAt(position).equals(Token.TokenTypes.WORD))
+                {
+                    ExceptionHandler("Missing object declaration in object initialization");
+                }
+                parserNewNode.className = getTokenValueAt(position);
+                position++;
+
+                if(!getTokenTypeAt(position).equals(Token.TokenTypes.WORD))
+                {
+                    ExceptionHandler("Missing Left parentheses on object declaration");
+                }
+                position++;
+                while (!getTokenTypeAt(position).equals(Token.TokenTypes.RPAREN))
+                {
+                    parserNewNode.parameters.add(ParseExpression());
+                    if(!getTokenTypeAt(position).equals(Token.TokenTypes.COMMA))
+                    {
+                        ExceptionHandler("Missing comma in object declaration");
+                    }
+                }
+                position++;
+                parserFactor = parserNewNode;
+                break;
+            default:
+                parserFactor = ParseVariableReference();
+        }
+        return parserFactor;
     }
 
 
