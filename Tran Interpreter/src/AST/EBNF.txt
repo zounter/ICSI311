@@ -1,0 +1,59 @@
+X Tran = ( Class | Interface )*
+
+X Interface = "interface" IDENTIFIER NEWLINE INDENT MethodHeader* DEDENT
+
+X MethodHeader = IDENTIFIER "(" ParameterVariableDeclarations ")" (":" ParameterVariableDeclarations)? NEWLINE
+
+X ParameterVariableDeclarations =  ParameterVariableDeclaration  ("," ParameterVariableDeclaration)*
+
+X ParameterVariableDeclaration = IDENTIFIER IDENTIFIER
+
+X Class =  "class" IDENTIFIER ( "implements" IDENTIFIER ( "," IDENTIFIER )* )? NEWLINE INDENT ( Constructor | MethodDeclaration | Member )* DEDENT
+
+X Constructor = "construct" "(" ParameterVariableDeclarations ")" NEWLINE MethodBody
+
+X Member = VariableDeclarations
+
+X VariableDeclarations =  IDENTIFIER VariableNameValue ("," VariableNameValue)* NEWLINE
+
+X VariableNameValue = IDENTIFIER ( "=" Expression)?
+
+X MethodDeclaration = "private"? "shared"? MethodHeader NEWLINE MethodBody
+
+X MethodBody = INDENT ( VariableDeclarations )*  Statement* DEDENT
+
+X Statements = INDENT Statement*  DEDENT
+
+* Statement = If | Loop | MethodCall | Assignment
+
+* If = "if" BoolExpTerm NEWLINE Statements ("else" NEWLINE (Statement | Statements))?
+
+* BoolExpTerm = MethodCallExpression | (Expression ( "==" | "!=" | "<=" | ">=" | ">" | "<" ) Expression) | VariableReference
+
+* Loop = "loop" (VariableReference "=" )?  ( BoolExpTerm ) NEWLINE Statements
+
+Assignment = VariableReference "=" Expression NEWLINE
+
+MethodCall = (VariableReference ( "," VariableReference )* "=")? MethodCallExpression NEWLINE
+
+* MethodCallExpression =  (IDENTIFIER ".")? IDENTIFIER "(" expression loop ")"
+expression loop = (Expression ("," Expression )*)?
+* Expression = Term ( ("+"|"-") Term )*
+
+* Term = Factor ( ("*"|"/"|"%") Factor )*
+
+* Factor = NUMBER | VariableReference |  STRINGLITERAL | CHARACTERLITERAL | MethodCallExpression | "(" Expression ")" | "new" IDENTIFIER "(" (Expression ("," Expression )*)? ")"
+                                                ^               ^
+                                                WE HAVE THESE :) (quotedTokens)
+Factor Structure
+check 1st token
+match with
+switch case
+STRINGLITERAL remove token increment 1
+CHARACTERLITERAL remove token increment 1
+"(" parse an expression and check for ")"
+"new" parse that thing at the end
+NUMBER parse token increment 1
+default Variable reference
+
+* VariableReference = IDENTIFIER
