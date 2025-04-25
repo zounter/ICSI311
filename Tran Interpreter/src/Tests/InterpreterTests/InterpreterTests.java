@@ -82,7 +82,7 @@ public class InterpreterTests {
                          "        keepGoing = true\n" +
                          "        loop keepGoing\n" +
                          "        	  if n >= 15\n" +
-                         "                keepGoing = boolan.false\n" +
+                         "                keepGoing = boolean.false\n" +
                          "            else\n" +
                          "                n = n + 1\n" +
                          "                console.write(n)\n";
@@ -131,8 +131,8 @@ public class InterpreterTests {
             var tran = new TranNode();
             var p = new Parser(tran,tokens);
             p.Tran();
-            System.out.println(tran.toString());
             var i = new Interpreter(tran);
+            System.out.println(tran);
             i.start();
         } catch (Exception e) {
             throw new RuntimeException(e);

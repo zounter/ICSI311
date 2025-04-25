@@ -68,7 +68,6 @@ public class Interpreter {
      * @param mc - the method call
      * @return - the return values
      */
-    //TODO
     private List<InterpreterDataType> findMethodForMethodCallAndRunIt(Optional<ObjectIDT> object, HashMap<String, InterpreterDataType> locals, MethodCallStatementNode mc) {
         List<InterpreterDataType> parameters = getParameters(object, locals, mc);
         for (ClassNode curClass : parsedCode.Classes)
@@ -268,7 +267,6 @@ public class Interpreter {
      * @param statements - the statements to run
      * @param locals - the local variables
      */
-    //TODO
     private void interpretStatementBlock(Optional<ObjectIDT> object, List<StatementNode> statements, HashMap<String, InterpreterDataType> locals) {
         for (StatementNode curStatement : statements)
         {
@@ -279,7 +277,14 @@ public class Interpreter {
                 destination.Assign(evaluation);
             }
             if (curStatement.getClass().equals(MethodCallStatementNode.class)){
-                findMethodForMethodCallAndRunIt(object, locals, (MethodCallStatementNode) curStatement);
+                List <InterpreterDataType> result = findMethodForMethodCallAndRunIt(object, locals, (MethodCallStatementNode) curStatement);
+                int i = 0;
+                for (InterpreterDataType curResult :result)
+                {
+                    InterpreterDataType destination = findVariable(((MethodCallStatementNode) curStatement).returnValues.get(i).name, locals, object);
+                    destination.Assign(curResult);
+                    i++;
+                }
             }
             if (curStatement.getClass().equals(LoopNode.class))
             {
@@ -324,7 +329,6 @@ public class Interpreter {
      * @param expression - some expression to evaluate
      * @return a value
      */
-    //TODO
     private InterpreterDataType evaluate(HashMap<String, InterpreterDataType> locals, Optional<ObjectIDT> object, ExpressionNode expression) {
         if (expression.getClass().equals(BooleanLiteralNode.class))
         {

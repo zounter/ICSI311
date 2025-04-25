@@ -80,6 +80,10 @@ public class Lexer {
             {
                 TokenList.add(readString());
             }
+            else if(document.peekCharacter() == '\r')
+            {
+                document.skip(1);
+            }
             else
             {
                 //checking if token can be found in the next 4 chars
@@ -236,6 +240,12 @@ public class Lexer {
             {
                 whitespace = indents * 4;
                 break;
+            }
+            else if (document.peekCharacter() == '\r')
+            {
+                document.skip(1);
+                this.column++;
+                continue;
             }
             else if(document.peekCharacter() != ' ')
             {
