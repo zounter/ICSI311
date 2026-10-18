@@ -438,7 +438,7 @@ public class Parser {
         parserMethodCall.methodName = parserMethodCallExpression.methodName;
         parserMethodCall.objectName = parserMethodCallExpression.objectName;
         parserMethodCall.parameters = parserMethodCallExpression.parameters;
-        if(!getTokenTypeAt(position).equals(Token.TokenTypes.NEWLINE))
+        if(!getTokenTypeAt(position).equals(Token.TokenTypes.NEWLINE) && !(getTokenTypeAt(position) == null))
         {
             ExceptionHandler("Missing NEWLINE in Method call");
         }

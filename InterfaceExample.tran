@@ -5,7 +5,7 @@ class TranExample implements someName
     shared start()
         number x = 10
         number y = TranExample.square(x)
-        console.print(y)
+        console.write(y)
 
     square(number x) : number s {The method we defined in the interface is used here!}
         s = x*x

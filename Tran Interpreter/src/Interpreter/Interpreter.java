@@ -34,18 +34,14 @@ public class Interpreter {
     public void start() {
         // putting the pre defs here
         builtIns.put("console.write", new ConsoleWrite());
-	    for (ClassNode curClass : parsedCode.Classes)
-        {
-            for(MethodDeclarationNode curMethod :curClass.methods)
-            {
-                if(curMethod.isShared && curMethod.name.equals("start"))
-                {
+	    for (ClassNode curClass : parsedCode.Classes) {
+            for (MethodDeclarationNode curMethod : curClass.methods) {
+                if (curMethod.isShared && curMethod.name.equals("start")) {
                     interpretMethodCall(Optional.of(new ObjectIDT(curClass)), curMethod, new LinkedList<InterpreterDataType>());
                     return;
                 }
             }
         }
-        throw new RuntimeException("No 'start' method found");
     }
 
     //              Running Methods
@@ -78,7 +74,7 @@ public class Interpreter {
                 {
                     if (mc.objectName.isPresent())
                     {
-                        if(locals.get(mc.objectName.get()).getClass().equals(ReferenceIDT.class))
+                        if(locals.get(mc.objectName.get()) != null && locals.get(mc.objectName.get()).getClass().equals(ReferenceIDT.class))
                         {
                             ReferenceIDT reference = (ReferenceIDT) locals.get(mc.objectName.get());
                             return interpretMethodCall(reference.refersTo, curMethod, parameters);
@@ -109,7 +105,7 @@ public class Interpreter {
                 {
                     if (me.objectName.isPresent())
                     {
-                        if(locals.get(me.objectName.get()).getClass().equals(ReferenceIDT.class))
+                        if(locals.get(me.objectName.get()) != null && locals.get(me.objectName.get()).getClass().equals(ReferenceIDT.class))
                         {
                             ReferenceIDT reference = (ReferenceIDT) locals.get(me.objectName.get());
                             return interpretMethodCall(reference.refersTo, curMethod, parameters).getFirst();
@@ -167,6 +163,7 @@ public class Interpreter {
         for (int i = 0; i < m.parameters.size(); i++)
         {
             if (!typeMatchToIDT(m.parameters.get(i).type, values.get(i))) throw new RuntimeException("Parameter mismatch");
+            locals.put(m.parameters.get(i).name, values.get(i));
         }
         for (VariableDeclarationNode curReturn : m.returns)
         {
@@ -175,7 +172,10 @@ public class Interpreter {
         }
         for (VariableDeclarationNode curLocal : m.locals)
         {
-            locals.put(curLocal.name, instantiate(curLocal.type));
+
+            if (curLocal.initializer.isPresent()) locals.put(curLocal.name, evaluate(locals, object, curLocal.initializer.get()));
+            else locals.put(curLocal.name, instantiate(curLocal.type));
+
         }
         interpretStatementBlock(object, m.statements, locals);
         return retVal;
@@ -687,10 +687,7 @@ public class Interpreter {
             case "string" -> {return new StringIDT("");}
             case "boolean" -> {return new BooleanIDT(false);}
             case "character" -> {return new CharIDT(' ');}
+            default -> {return new ReferenceIDT();}
         }
-        ReferenceIDT result = new ReferenceIDT();
-        result.refersTo = Optional.empty();
-        return result;
     }
-
 }
